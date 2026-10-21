@@ -74,6 +74,8 @@ type Decoder struct {
 	rec        []byte
 	dict       []string
 	flags      uint32
+	depth      int
+	maxDepth   int
 }
 
 // NewDecoder returns a new decoder that reads from r.
@@ -97,6 +99,8 @@ func (d *Decoder) Reset(r io.Reader) {
 func (d *Decoder) ResetDict(r io.Reader, dict []string) {
 	d.ResetReader(r)
 	d.flags = 0
+	d.depth = 0
+	d.maxDepth = defaultMaxDepth
 	d.structTag = ""
 	d.dict = dict
 }
@@ -325,6 +329,30 @@ func (d *Decoder) decodeInterfaceCond() (interface{}, error) {
 		return d.DecodeInterfaceLoose()
 	}
 	return d.DecodeInterface()
+}
+
+// defaultMaxDepth is the default limit on nested container decoding. It mirrors
+// the limits used by prost (Rust protobuf) and encoding/json to prevent a
+// crafted, deeply nested message from overflowing the goroutine stack.
+const defaultMaxDepth = 100
+
+// SetMaxDepth sets the maximum nesting depth of decoded arrays and maps.
+// Decoding a more deeply nested value fails with an error instead of
+// overflowing the stack. A non-positive value disables the limit.
+func (d *Decoder) SetMaxDepth(n int) {
+	d.maxDepth = n
+}
+
+func (d *Decoder) enterNesting() error {
+	d.depth++
+	if d.maxDepth > 0 && d.depth > d.maxDepth {
+		return fmt.Errorf("msgpack: maximum nesting depth (%d) exceeded", d.maxDepth)
+	}
+	return nil
+}
+
+func (d *Decoder) leaveNesting() {
+	d.depth--
 }
 
 func (d *Decoder) DecodeValue(v reflect.Value) error {

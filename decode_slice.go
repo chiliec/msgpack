@@ -81,6 +81,11 @@ func makeStrings(s []string, n int, noLimit bool) []string {
 }
 
 func decodeSliceValue(d *Decoder, v reflect.Value) error {
+	if err := d.enterNesting(); err != nil {
+		return err
+	}
+	defer d.leaveNesting()
+
 	n, err := d.DecodeArrayLen()
 	if err != nil {
 		return err
@@ -131,6 +136,11 @@ func growSliceValue(v reflect.Value, n int, noLimit bool) reflect.Value {
 }
 
 func decodeArrayValue(d *Decoder, v reflect.Value) error {
+	if err := d.enterNesting(); err != nil {
+		return err
+	}
+	defer d.leaveNesting()
+
 	n, err := d.DecodeArrayLen()
 	if err != nil {
 		return err
@@ -169,6 +179,11 @@ func (d *Decoder) decodeSlice(c byte) ([]interface{}, error) {
 	if n == -1 {
 		return nil, nil
 	}
+
+	if err := d.enterNesting(); err != nil {
+		return nil, err
+	}
+	defer d.leaveNesting()
 
 	s := make([]interface{}, 0, n)
 	for i := 0; i < n; i++ {

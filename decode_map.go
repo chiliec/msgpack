@@ -23,6 +23,11 @@ var (
 )
 
 func decodeMapValue(d *Decoder, v reflect.Value) error {
+	if err := d.enterNesting(); err != nil {
+		return err
+	}
+	defer d.leaveNesting()
+
 	n, err := d.DecodeMapLen()
 	if err != nil {
 		return err
@@ -157,6 +162,11 @@ func (d *Decoder) DecodeMap() (map[string]interface{}, error) {
 		return nil, nil
 	}
 
+	if err := d.enterNesting(); err != nil {
+		return nil, err
+	}
+	defer d.leaveNesting()
+
 	m := make(map[string]interface{}, n)
 
 	for i := 0; i < n; i++ {
@@ -183,6 +193,11 @@ func (d *Decoder) DecodeUntypedMap() (map[interface{}]interface{}, error) {
 	if n == -1 {
 		return nil, nil
 	}
+
+	if err := d.enterNesting(); err != nil {
+		return nil, err
+	}
+	defer d.leaveNesting()
 
 	m := make(map[interface{}]interface{}, n)
 
@@ -213,6 +228,11 @@ func (d *Decoder) DecodeTypedMap() (interface{}, error) {
 	if n <= 0 {
 		return nil, nil
 	}
+
+	if err := d.enterNesting(); err != nil {
+		return nil, err
+	}
+	defer d.leaveNesting()
 
 	key, err := d.decodeInterfaceCond()
 	if err != nil {
@@ -289,6 +309,11 @@ func (d *Decoder) skipMap(c byte) error {
 }
 
 func decodeStructValue(d *Decoder, v reflect.Value) error {
+	if err := d.enterNesting(); err != nil {
+		return err
+	}
+	defer d.leaveNesting()
+
 	c, err := d.readCode()
 	if err != nil {
 		return err
